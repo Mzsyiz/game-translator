@@ -57,28 +57,48 @@ jobs:
         python build.py
       continue-on-error: false
 
-    - name: Create release package
+    - name: List build output
       run: |
-        python create_release.py
-      continue-on-error: false
+        dir dist
+      shell: cmd
+
+    - name: Create release directory
+      run: |
+        if not exist release mkdir release
+        xcopy /E /I /Y dist\*.exe release\ 2>nul || echo No exe files
+        xcopy /E /I /Y dist\启动翻译助手 release\启动翻译助手\ 2>nul || echo No directory
+        xcopy /E /I /Y config release\config\
+        xcopy /Y translation\slang_dict.json release\translation\ 2>nul || (mkdir release\translation && copy translation\slang_dict.json release\translation\)
+        if not exist release\models mkdir release\models
+        if not exist release\logs mkdir release\logs
+        copy README.md release\ 2>nul || echo README not found
+      shell: cmd
+
+    - name: Create release archive
+      run: |
+        cd release
+        powershell Compress-Archive -Path * -DestinationPath ../游戏翻译助手_${{ github.ref_name }}.zip
+        cd ..
+      shell: cmd
 
     - name: List release files
       run: |
-        dir release
+        dir *.zip
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: 游戏翻译助手
-        path: release/*.zip
+        name: 游戏翻译助手-${{ github.ref_name }}
+        path: 游戏翻译助手_*.zip
         if-no-files-found: error
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: release/*.zip
+        files: 游戏翻译助手_*.zip
         draft: false
         prerelease: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
