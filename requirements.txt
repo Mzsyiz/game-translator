@@ -1,0 +1,30 @@
+# 核心依赖
+faster-whisper==1.0.3
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# 音频处理
+sounddevice==0.4.6
+numpy>=1.24.0
+webrtcvad==2.0.10
+scipy>=1.10.0
+
+# 翻译引擎
+argostranslate==1.9.1
+deep-translator==1.11.4
+googletrans==4.0.0rc1
+
+# GUI 界面
+PyQt5>=5.15.9
+PyQt5-Qt5>=5.15.2
+
+# 配置管理
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# 工具库
+requests>=2.31.0
+loguru>=0.7.0
+
+# Windows 特定
+pywin32>=306; sys_platform == 'win32'

@@ -1,0 +1,106 @@
+# 游戏实时语音翻译配置文件
+
+# 音频捕获配置
+audio:
+  device_name: "CABLE Output"  # 虚拟声卡设备名称
+  sample_rate: 16000           # 采样率 (Whisper 要求 16kHz)
+  channels: 1                  # 单声道
+  chunk_duration: 0.3          # 音频切片时长 (秒)
+  buffer_size: 1024            # 缓冲区大小
+
+# 语音活动检测 (VAD)
+vad:
+  enabled: true                # 是否启用 VAD
+  aggressiveness: 3            # 激进程度 (0-3, 3 最激进)
+  min_speech_duration: 0.3     # 最小语音时长 (秒)
+  max_silence_duration: 0.8    # 最大静音时长 (秒)
+  padding_duration: 0.2        # 前后填充时长 (秒)
+
+# Whisper 语音识别配置
+whisper:
+  model_size: "medium"         # 模型大小: tiny/base/small/medium/large
+  device: "cuda"               # 设备: cuda/cpu
+  compute_type: "float16"      # 计算类型: float16/int8/float32
+  beam_size: 5                 # beam search 大小 (1-5, 越小越快)
+  language: null               # 源语言 (null 为自动检测)
+  task: "transcribe"           # 任务类型: transcribe/translate
+  vad_filter: true             # 使用 VAD 过滤
+
+# 翻译配置
+translation:
+  mode: "hybrid"               # 翻译模式: local/online/hybrid
+  target_language: "zh"        # 目标语言代码
+
+  # 本地翻译 (Argos Translate)
+  local:
+    enabled: true
+    model_cache: "./models/argos"
+
+  # 在线翻译
+  online:
+    provider: "deepl"          # 翻译服务: deepl/google
+    api_key: ""                # API 密钥 (留空使用免费版)
+    timeout: 3                 # 超时时间 (秒)
+    retry: 2                   # 重试次数
+
+  # 游戏黑话词典
+  slang_dict:
+    enabled: true
+    dict_path: "./translation/slang_dict.json"
+
+# 字幕显示配置
+overlay:
+  enabled: true
+  position: "bottom"           # 位置: top/center/bottom
+  offset_x: 0                  # 水平偏移 (像素)
+  offset_y: 100                # 垂直偏移 (像素)
+  width: 1200                  # 字幕窗口宽度
+  height: 150                  # 字幕窗口高度
+
+  # 字幕样式
+  style:
+    font_family: "Microsoft YaHei"
+    font_size: 24
+    font_weight: "bold"
+    text_color: "#FFFFFF"
+    outline_color: "#000000"
+    outline_width: 2
+    background_color: "rgba(0, 0, 0, 0.6)"
+    padding: 15
+
+  # 显示行为
+  display:
+    max_lines: 3               # 最多显示行数
+    fade_duration: 0.3         # 淡入淡出时长 (秒)
+    stay_duration: 5.0         # 字幕停留时长 (秒)
+    show_language_tag: true    # 显示语言标签 [EN]/[RU]
+
+  # 高亮关键词
+  highlight:
+    enabled: true
+    keywords:
+      - "behind"
+      - "grenade"
+      - "reload"
+      - "enemy"
+      - "help"
+    color: "#FF4444"
+
+# 性能优化
+performance:
+  max_queue_size: 10           # 最大队列大小
+  thread_pool_size: 2          # 线程池大小
+  enable_profiling: false      # 启用性能分析
+
+# 日志配置
+logging:
+  level: "INFO"                # 日志级别: DEBUG/INFO/WARNING/ERROR
+  file: "./logs/app.log"       # 日志文件路径
+  rotation: "10 MB"            # 日志轮转大小
+  retention: "7 days"          # 日志保留时间
+
+# 快捷键配置
+hotkeys:
+  toggle_capture: "ctrl+shift+s"    # 开始/停止捕获
+  toggle_overlay: "ctrl+shift+h"    # 显示/隐藏字幕
+  quit: "ctrl+shift+q"              # 退出程序
