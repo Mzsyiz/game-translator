@@ -47,7 +47,7 @@ def build():
 
         # 基本设置
         '--name=启动翻译助手',
-        '--onefile',                    # 打包成单个文件
+        '--onedir',                     # 改为目录模式（更稳定，构建更快）
         '--windowed',                   # 无控制台窗口
         '--noconfirm',                  # 覆盖输出目录
 
@@ -74,6 +74,7 @@ def build():
         '--hidden-import=loguru',
         '--hidden-import=yaml',
         '--hidden-import=deep_translator',
+        '--hidden-import=pkg_resources.py2_warn',
 
         # 排除不需要的模块（减小体积）
         '--exclude-module=matplotlib',
@@ -81,20 +82,33 @@ def build():
         '--exclude-module=IPython',
         '--exclude-module=jupyter',
         '--exclude-module=notebook',
+        '--exclude-module=tkinter',
+        '--exclude-module=PIL',
 
         # 优化
-        '--strip',                      # 去除调试符号
         '--noupx',                      # 不使用 UPX 压缩（避免杀毒软件误报）
 
         # 日志级别
-        '--log-level=INFO',
+        '--log-level=WARN',             # 减少日志输出
     ]
 
     try:
         PyInstaller.__main__.run(args)
         print("\n[3/3] 打包完成！")
-        print(f"\n✓ 可执行文件位置: dist/启动翻译助手.exe")
-        print(f"✓ 文件大小: {get_file_size('dist/启动翻译助手.exe')}")
+
+        # 检查输出目录
+        dist_dir = Path('dist/启动翻译助手')
+        exe_file = dist_dir / '启动翻译助手.exe'
+
+        if exe_file.exists():
+            print(f"\n✓ 可执行文件位置: {exe_file}")
+            print(f"✓ 文件大小: {get_file_size(exe_file)}")
+        else:
+            print(f"\n⚠️  可执行文件未找到: {exe_file}")
+            print("检查 dist/ 目录内容...")
+            if dist_dir.exists():
+                for item in dist_dir.iterdir():
+                    print(f"  - {item.name}")
 
     except Exception as e:
         print(f"\n❌ 打包失败: {e}")

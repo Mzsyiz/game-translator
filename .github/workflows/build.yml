@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 60  # 增加超时时间
 
     steps:
     - name: Checkout code
@@ -18,31 +19,68 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: 'pip'  # 缓存 pip 依赖
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        choco install ffmpeg -y
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
         pip install pyinstaller
+
+        # 分步安装大型依赖，避免超时
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install faster-whisper
+        pip install PyQt5
+        pip install sounddevice numpy scipy
+        pip install pyyaml loguru requests
+        pip install argostranslate deep-translator
+        pip install webrtcvad
+        pip install pywin32
+        pip install python-dotenv
+
+    - name: Verify installation
+      run: |
+        python -c "import torch; print('PyTorch:', torch.__version__)"
+        python -c "import PyQt5; print('PyQt5: OK')"
+        python -c "import faster_whisper; print('faster-whisper: OK')"
+
+    - name: Create necessary directories
+      run: |
+        if not exist models mkdir models
+        if not exist logs mkdir logs
+        if not exist release mkdir release
+      shell: cmd
 
     - name: Build executable
       run: |
         python build.py
+      continue-on-error: false
 
     - name: Create release package
       run: |
         python create_release.py
+      continue-on-error: false
+
+    - name: List release files
+      run: |
+        dir release
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: 游戏翻译助手
         path: release/*.zip
+        if-no-files-found: error
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: release/*.zip
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

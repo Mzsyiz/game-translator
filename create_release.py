@@ -17,11 +17,27 @@ def create_release():
     print("=" * 60)
     print()
 
-    # 检查主程序是否存在
-    exe_path = Path("dist/启动翻译助手.exe")
-    if not exe_path.exists():
+    # 检查主程序是否存在（支持两种打包模式）
+    exe_path_onefile = Path("dist/启动翻译助手.exe")
+    exe_path_onedir = Path("dist/启动翻译助手/启动翻译助手.exe")
+    dist_dir = Path("dist/启动翻译助手")
+
+    if exe_path_onefile.exists():
+        # 单文件模式
+        exe_path = exe_path_onefile
+        is_onedir = False
+        print("检测到单文件打包模式")
+    elif exe_path_onedir.exists():
+        # 目录模式
+        exe_path = exe_path_onedir
+        is_onedir = True
+        print("检测到目录打包模式")
+    else:
         print("❌ 未找到主程序")
         print("\n请先运行: python build.py")
+        print(f"\n查找路径：")
+        print(f"  - {exe_path_onefile}")
+        print(f"  - {exe_path_onedir}")
         return
 
     # 版本号
@@ -47,8 +63,17 @@ def create_release():
     print("\n[2/5] 复制主程序...")
 
     # 复制主程序
-    shutil.copy(exe_path, release_dir / "启动翻译助手.exe")
-    print("  ✓ 启动翻译助手.exe")
+    if is_onedir:
+        # 目录模式：复制整个目录
+        shutil.copytree(dist_dir, release_dir / "app")
+        # 创建启动脚本
+        create_launcher_bat(release_dir)
+        print("  ✓ app/ (包含所有依赖)")
+        print("  ✓ 启动翻译助手.bat (启动脚本)")
+    else:
+        # 单文件模式：直接复制 exe
+        shutil.copy(exe_path, release_dir / "启动翻译助手.exe")
+        print("  ✓ 启动翻译助手.exe")
 
     print("\n[3/5] 复制配置文件...")
 
@@ -283,6 +308,18 @@ URL=https://vb-audio.com/Cable/
 """
 
     with open(release_dir / "下载虚拟声卡.url", 'w', encoding='utf-8') as f:
+        f.write(content)
+
+
+def create_launcher_bat(release_dir):
+    """创建启动脚本（用于目录模式）"""
+    content = """@echo off
+chcp 65001 >nul
+cd /d "%~dp0"
+start "" "app\启动翻译助手.exe"
+"""
+
+    with open(release_dir / "启动翻译助手.bat", 'w', encoding='utf-8') as f:
         f.write(content)
 
 
