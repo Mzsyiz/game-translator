@@ -70,21 +70,21 @@ jobs:
         if not exist release\logs mkdir release\logs
 
         echo Copying executable directory...
-        xcopy /E /I /Y "dist\启动翻译助手" "release\启动翻译助手\"
+        xcopy /E /I /Y dist\启动翻译助手 release\启动翻译助手\
         if errorlevel 1 (
           echo ERROR: Failed to copy executable directory
           exit /b 1
         )
 
         echo Copying config files...
-        xcopy /E /I /Y config "release\config\"
+        xcopy /E /I /Y config release\config\
         if errorlevel 1 (
           echo ERROR: Failed to copy config
           exit /b 1
         )
 
         echo Copying translation files...
-        copy /Y "translation\slang_dict.json" "release\translation\"
+        copy /Y translation\slang_dict.json release\translation\
         if errorlevel 1 (
           echo ERROR: Failed to copy slang_dict.json
           exit /b 1
@@ -101,9 +101,9 @@ jobs:
 
     - name: Create startup script
       run: |
-        echo @echo off > "release\启动翻译助手.bat"
-        echo cd /d "%%~dp0" >> "release\启动翻译助手.bat"
-        echo start "" "启动翻译助手\启动翻译助手.exe" >> "release\启动翻译助手.bat"
+        echo @echo off > release\启动翻译助手.bat
+        echo cd /d "%%%%~dp0" >> release\启动翻译助手.bat
+        echo start "" "启动翻译助手\启动翻译助手.exe" >> release\启动翻译助手.bat
         echo Created startup script
       shell: cmd
 
