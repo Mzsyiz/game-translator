@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 60  # 增加超时时间
+    timeout-minutes: 60
 
     steps:
     - name: Checkout code
@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        cache: 'pip'  # 缓存 pip 依赖
+        cache: 'pip'
 
     - name: Install system dependencies
       run: |
@@ -29,8 +29,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install pyinstaller
-
-        # 分步安装大型依赖，避免超时
         pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
         pip install faster-whisper
         pip install PyQt5
