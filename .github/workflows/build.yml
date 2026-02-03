@@ -65,40 +65,112 @@ jobs:
     - name: Create release directory
       run: |
         if not exist release mkdir release
-        xcopy /E /I /Y dist\*.exe release\ 2>nul || echo No exe files
-        xcopy /E /I /Y dist\启动翻译助手 release\启动翻译助手\ 2>nul || echo No directory
-        xcopy /E /I /Y config release\config\
-        xcopy /Y translation\slang_dict.json release\translation\ 2>nul || (mkdir release\translation && copy translation\slang_dict.json release\translation\)
+        if not exist release\translation mkdir release\translation
         if not exist release\models mkdir release\models
         if not exist release\logs mkdir release\logs
-        copy README.md release\ 2>nul || echo README not found
+
+        echo Copying executable directory...
+        xcopy /E /I /Y "dist\启动翻译助手" "release\启动翻译助手\"
+        if errorlevel 1 (
+          echo ERROR: Failed to copy executable directory
+          exit /b 1
+        )
+
+        echo Copying config files...
+        xcopy /E /I /Y config "release\config\"
+        if errorlevel 1 (
+          echo ERROR: Failed to copy config
+          exit /b 1
+        )
+
+        echo Copying translation files...
+        copy /Y "translation\slang_dict.json" "release\translation\"
+        if errorlevel 1 (
+          echo ERROR: Failed to copy slang_dict.json
+          exit /b 1
+        )
+
+        echo Copying README...
+        copy /Y README.md release\
+        if errorlevel 1 (
+          echo WARNING: README.md not found
+        )
+
+        echo Release directory created successfully
+      shell: cmd
+
+    - name: Create startup script
+      run: |
+        echo @echo off > "release\启动翻译助手.bat"
+        echo cd /d "%%~dp0" >> "release\启动翻译助手.bat"
+        echo start "" "启动翻译助手\启动翻译助手.exe" >> "release\启动翻译助手.bat"
+        echo Created startup script
+      shell: cmd
+
+    - name: Verify release contents
+      run: |
+        echo Checking release directory contents...
+        dir /S release
       shell: cmd
 
     - name: Create release archive
       run: |
-        cd release
-        powershell Compress-Archive -Path * -DestinationPath ../游戏翻译助手_${{ github.ref_name }}.zip
-        cd ..
-      shell: cmd
+        $version = "${{ github.ref_name }}"
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = "latest"
+        }
+        $zipName = "游戏翻译助手_${version}.zip"
+        Write-Host "Creating archive: $zipName"
+
+        Compress-Archive -Path "release\*" -DestinationPath $zipName -Force
+
+        if (Test-Path $zipName) {
+          $size = (Get-Item $zipName).Length / 1MB
+          Write-Host "Archive created successfully: $([math]::Round($size, 2)) MB"
+        } else {
+          Write-Error "Failed to create archive"
+          exit 1
+        }
+      shell: powershell
 
     - name: List release files
       run: |
+        echo Listing all zip files:
         dir *.zip
+      shell: cmd
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: 游戏翻译助手-${{ github.ref_name }}
-        path: 游戏翻译助手_*.zip
+        name: game-translator-${{ github.run_number }}
+        path: "*.zip"
         if-no-files-found: error
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        files: 游戏翻译助手_*.zip
+        files: "*.zip"
         draft: false
         prerelease: false
         generate_release_notes: true
+        body: |
+          ## 游戏翻译助手 ${{ github.ref_name }}
+
+          ### 📦 下载说明
+          1. 下载 `游戏翻译助手_${{ github.ref_name }}.zip`
+          2. 解压到任意目录
+          3. 双击 `启动翻译助手.bat` 运行
+
+          ### ✨ 功能特性
+          - 🎮 实时游戏语音识别与翻译
+          - 🎯 支持多种翻译引擎
+          - 🔊 高质量音频处理
+          - ⚙️ 灵活的配置选项
+
+          ### 📋 系统要求
+          - Windows 10/11 (64位)
+          - 4GB+ RAM
+          - 麦克风设备
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
